@@ -1,0 +1,5 @@
+# Never in git: your own collection export, used by the tests on this PC.
+test-data/
+
+# Claude Code's per-machine settings.
+.claude/settings.local.json

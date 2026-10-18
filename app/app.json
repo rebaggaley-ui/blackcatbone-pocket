@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "BlackCatBone Pocket",
+    "slug": "blackcatbone-pocket",
+    "scheme": "bcbpocket",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cheifwhat.bcbpocket"
+    },
+    "android": {
+      "package": "com.cheifwhat.bcbpocket",
+      "adaptiveIcon": {
+        "backgroundColor": "#141210",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-sqlite",
+      "expo-image",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose photos of your records, tapes and CDs for their pages in your collection.",
+          "cameraPermission": "Photograph your records, tapes and CDs for their pages in your collection.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-sharing"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pocket-web",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-ExecutionPolicy", "Bypass", "-Command", "$env:Path = 'C:\Program Files\nodejs;' + $env:Path; $env:CI = '1'; Set-Location 'C:\Users\rebag\OneDrive\Desktop\Claude Ideas\BlackCatBone Pocket\app'; npx expo start --web --port 8081"],
+      "port": 8081
+    }
+  ]
+}
