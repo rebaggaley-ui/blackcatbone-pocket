@@ -42,6 +42,18 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ba22eebe-4a9b-4945-bcae-bb4829d9affe"
+      }
+    },
+    "owner": "rebaggaley",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ba22eebe-4a9b-4945-bcae-bb4829d9affe"
     }
   }
 }
