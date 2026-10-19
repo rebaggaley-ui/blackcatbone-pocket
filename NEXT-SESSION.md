@@ -20,7 +20,7 @@ BlackCatBone Pocket is a phone app (iPhone and Android) for viewing your music c
 
 ## What needs doing next
 1. **Help the user finish the first run on the phone** (bring the collection in, then artwork). Fix whatever shows up. The dev server's output, in the terminal running `npm start`, shows the phone's errors.
-2. **Make "Save as a CSV" write formats exactly as Discogs' export does.** Found by the game's Discogs import work on 18 Oct: `formatText` in `src\lib\discogsCollection.ts` differs from the export for 693 of the 1,212 records. Kinds and filters are unaffected; the CSV Pocket saves for the game is. The export's rules (the game's `ExportFormat` matches all 1,212 records):
+2. **Check "Save as a CSV" formats against the real export.** `formatText` now follows the rules below (sizes first, short forms, no speeds or Stereo, free text cut, 50 characters) but hasn't been run against `test-data\` yet; the order of descriptions is kept as Discogs' API gives it, after the sizes. Before that fix: Found by the game's Discogs import work on 18 Oct: `formatText` in `src\lib\discogsCollection.ts` differs from the export for 693 of the 1,212 records. Kinds and filters are unaffected; the CSV Pocket saves for the game is. The export's rules (the game's `ExportFormat` matches all 1,212 records):
    - sizes come first;
    - "LP" is dropped when there's a size;
    - descriptions use Discogs' short forms (Comp, Ltd, RE, S/Sided, W/Lbl, Box, Flexi, Lathe...), in Discogs' order;

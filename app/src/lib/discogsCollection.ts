@@ -37,23 +37,81 @@ export function joinArtists(artists: { name?: string; anv?: string; join?: strin
   return text.trim();
 }
 
-/** Formats as the export writes them: '7"', 'LP, Album', '2x7", Single', several joined with " + ". */
+/** Format names the export shortens ("Cassette" is "Cass"); any other is written as it is. */
+const SHORT_NAMES: Record<string, string> = {
+  Cassette: 'Cass',
+  'Box Set': 'Box',
+  'Flexi-disc': 'Flexi',
+  'Lathe Cut': 'Lathe',
+  'Reel-To-Reel': 'Reel',
+  '8-Track Cartridge': '8-Trk',
+  'Floppy Disk': 'Floppy',
+};
+
+/** Descriptions the export shortens ("Compilation" is "Comp"); any other is written as it is. */
+const SHORT_DESCRIPTIONS: Record<string, string> = {
+  Compilation: 'Comp',
+  'Limited Edition': 'Ltd',
+  Reissue: 'RE',
+  Remastered: 'RM',
+  Repress: 'RP',
+  'Single Sided': 'S/Sided',
+  'White Label': 'W/Lbl',
+  'Test Pressing': 'TP',
+  Numbered: 'Num',
+  'Picture Disc': 'Pic',
+  'Unofficial Release': 'Unofficial',
+  'Special Edition': 'S/Edition',
+  'Deluxe Edition': 'Dlx',
+  'Club Edition': 'Club',
+  Enhanced: 'Enh',
+  'Mini-Album': 'MiniAlbum',
+  'Maxi-Single': 'Maxi',
+  'Partially Mixed': 'P/Mixed',
+  Sampler: 'Smplr',
+  Etched: 'Etch',
+  Quadraphonic: 'Quad',
+  'Copy Protected': 'Copy Prot.',
+  'Record Store Day': 'RSD',
+};
+
+/** A record's size: '7"', '12"', '6½"'. */
+const isSize = (description: string) => /^\d+(?:[½¼¾]|\.\d+)?"$/.test(description);
+
+/**
+ * Formats as the export writes them: '7"', 'LP, Album', '2x7", Single, RE', several joined with " + ". Sizes come
+ * first and a vinyl's size stands for "Vinyl" (and for "LP"); no speeds or "Stereo"; Discogs' short forms; free text
+ * cut to three letters ("Boxed Decca" is "Box"); 50 characters at most.
+ */
 export function formatText(formats: { name?: string; qty?: string; descriptions?: string[]; text?: string }[]): string {
-  return formats
+  const text = formats
     .map((format) => {
       const qty = Number.parseInt(format.qty ?? '1', 10);
-      // A vinyl's size ('7"') stands for "Vinyl"; speeds aren't in the export.
-      const descriptions = (format.descriptions ?? []).filter((d) => !/\bRPM\b/i.test(d));
-      const isVinyl = format.name === 'Vinyl' && descriptions.length > 0;
-      const head = isVinyl ? descriptions.shift() ?? '' : format.name ?? '';
-      const parts = [`${qty > 1 ? `${qty}x` : ''}${head}`, ...descriptions];
-      if (format.text) {
-        parts.push(format.text);
+      const all = (format.descriptions ?? []).filter((d) => !/\bRPM\b/i.test(d) && d !== 'Stereo');
+      const sizes = all.filter(isSize);
+      let descriptions = all.filter((d) => !isSize(d));
+      if (sizes.length > 0) {
+        descriptions = descriptions.filter((d) => d !== 'LP');
+      }
+      descriptions = descriptions.map((d) => SHORT_DESCRIPTIONS[d] ?? d);
+      const name = format.name ?? '';
+      let parts: string[];
+      if (name === 'Vinyl' && (sizes.length > 0 || descriptions[0] === 'LP')) {
+        // '7"' or 'LP' stands for "Vinyl".
+        const head = sizes.length > 0 ? sizes.shift() ?? '' : descriptions.shift() ?? '';
+        parts = [`${qty > 1 ? `${qty}x` : ''}${head}`, ...sizes, ...descriptions];
+      } else {
+        parts = [`${qty > 1 ? `${qty}x` : ''}${SHORT_NAMES[name] ?? name}`, ...sizes, ...descriptions];
+      }
+      const free = (format.text ?? '').trim().slice(0, 3);
+      if (free) {
+        parts.push(free);
       }
       return parts.filter(Boolean).join(', ');
     })
     .filter(Boolean)
     .join(' + ');
+  return text.slice(0, 50);
 }
 
 /** "2022-04-11T13:39:54-07:00" -> "2022-04-11 13:39:54": as the export writes it (the same clock, Discogs'). */
