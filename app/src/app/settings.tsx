@@ -1,10 +1,12 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
+import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { getDiscogsUsername, setDiscogsUsername } from '@/lib/collectionSources';
 import { getArtworkCounts, resetLookups, type ArtworkCounts } from '@/lib/db';
+import { currentGoogleAccount, googleSignInProblem, signInToGoogle, signOutOfGoogle } from '@/lib/googleSignIn';
 import { clearFetchedArtwork } from '@/lib/images';
 import {
   artworkQueue,
@@ -36,8 +38,36 @@ export default function Settings() {
   const [revision, setRevision] = useState(0);
   const [username, setUsername] = useState('');
   const [usernameText, setUsernameText] = useState('');
+  const [google, setGoogle] = useState<string | null>(null);
   const refresh = useCallback(() => setRevision((n) => n + 1), []);
   const collection = useCollectionActions(refresh);
+  const googleProblem = googleSignInProblem();
+
+  useEffect(() => {
+    let current = true;
+    currentGoogleAccount().then((email) => current && setGoogle(email));
+    return () => {
+      current = false;
+    };
+  }, [revision]);
+
+  const googleSignIn = useCallback(async () => {
+    try {
+      await signInToGoogle(true);
+    } catch (error) {
+      tell('Couldn’t sign in to Google', error instanceof Error ? error.message : String(error));
+    }
+    refresh();
+  }, [refresh]);
+
+  const googleSignOut = useCallback(async () => {
+    try {
+      await signOutOfGoogle();
+    } catch (error) {
+      tell('Couldn’t sign out', error instanceof Error ? error.message : String(error));
+    }
+    refresh();
+  }, [refresh]);
 
   useEffect(() => {
     let current = true;
@@ -201,6 +231,21 @@ export default function Settings() {
           file” makes a file in Discogs’ export layout and opens the share menu: save it to OneDrive or email it to yourself, and the game’s
           Librarian can import it.
         </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>YouTube playlists</Text>
+        <Text style={styles.note}>
+          {googleProblem ??
+            (google
+              ? `Signed in to Google as ${google}. The app can only make and change playlists in your YouTube account.`
+              : 'Make a playlist in your YouTube account from records you choose. You sign in to Google the first time (the app only asks to make and change playlists).')}
+        </Text>
+        <View style={styles.buttons}>
+          <Button label="Make a playlist" onPress={() => router.push('/playlist')} primary />
+          {!googleProblem && !google ? <Button label="Sign in to Google" onPress={googleSignIn} /> : null}
+          {google ? <Button label="Sign out" onPress={googleSignOut} /> : null}
+        </View>
       </View>
 
       <Text style={styles.heading}>Artwork</Text>

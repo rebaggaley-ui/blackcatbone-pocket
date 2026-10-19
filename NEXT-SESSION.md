@@ -32,7 +32,7 @@ BlackCatBone Pocket is a phone app (iPhone and Android) for viewing your music c
 3. **Mixtapes** (design section 6b): C46/C60/C90/C120, sides A and B with time left, a gap between songs, estimated lengths clearly marked, and a printable J-card.
 4. **Scanning** (design section 5): barcodes (the Discogs barcodes are already fetched with the artwork, in the `lookups` table) and printable QR ID labels (`BCB-000123`).
 5. **Items not on Discogs** (added by hand, marked as such).
-6. **Streaming playlists** (design section 6a): a playlist file for any service first, then Spotify (only for a few named users unless Spotify approves the app) and YouTube (about 100 searched songs a day).
+6. **Streaming playlists** (design section 6a). **YouTube is built** (19 Oct, on the `claude/youtube-playlists-thisw9` branch): `src\app\playlist.tsx`, `src\lib\youtube.ts` (songs from records, matching, API), `youtubePlaylists.ts` (searches remembered, daily allowance, carry on tomorrow), `googleSignIn.ts`. **Waiting on the user:** the Google Cloud setup in `YOUTUBE-SETUP.md` (client IDs as EAS environment variables) and a new build, since Google's sign-in can't run in Expo Go. Not tried on a phone yet. Still to do: a playlist file for any service, then Spotify (only for a few named users unless Spotify approves the app).
 7. **The player** (design section 6): music files on the phone first.
 8. **Later:**
    - "Sign in with Discogs": register the app with Discogs for OAuth, so others don't paste a token.
@@ -44,17 +44,18 @@ BlackCatBone Pocket is a phone app (iPhone and Android) for viewing your music c
 - **Screens:**
   - `src\app\index.tsx`: the collection grid; *Update* is the menu to bring in, import or save.
   - `src\app\record\[key].tsx`: a record's page, with its photos, tracklist and *Find artwork now*.
-  - `src\app\settings.tsx`: your Discogs account (token steps), your collection, artwork.
+  - `src\app\settings.tsx`: your Discogs account (token steps), your collection, YouTube sign-in, artwork.
+  - `src\app\playlist.tsx`: a YouTube playlist from ticked records (pick, check the matches, make, carry on).
 - **Library** (`src\lib`):
   - `csv.ts`: reads and writes Discogs exports. Keys are `d<release>-<n>`, numbered by date added.
   - `discogsCollection.ts`: the collection straight from the Discogs API, mapped to the same rows as the CSV; all 1,212 matched the real export.
-  - `db.ts`: SQLite, schema version 2, with items, images, lookups and settings.
+  - `db.ts`: SQLite, schema version 3, with items, images, lookups, settings, `youtube_matches` (every search made, so it's never made twice) and `playlists`.
   - `lookups.ts`: the artwork queue (Discogs photos, MusicBrainz / Cover Art Archive stand-ins).
   - `http.ts`: pacing. Discogs allows 60/min with a token and 25 without; MusicBrainz is about 1 a second and answers 503 when busy, so the app backs off.
   - `images.ts` (picture files), `photos.ts` (camera and library), `artwork.ts` (parsers), `collectionSources.ts` (bring in, save CSV), `useCollectionActions.ts`.
 - The **token** is in expo-secure-store; it's never in the database. Online lookups are off until switched on.
 - **Checks** (run them before calling anything done):
-  - `npm run typecheck`, `npm run lint`, `npm test` (19 tests).
+  - `npm run typecheck`, `npm run lint`, `npm test` (31 tests).
   - `npx expo export --platform android --platform ios` (both phone bundles).
   - `npm test` uses the real export in `test-data\` (outside `app\`, so never in git).
 - **Running it:**

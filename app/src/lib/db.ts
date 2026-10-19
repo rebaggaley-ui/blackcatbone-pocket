@@ -63,7 +63,7 @@ interface ItemRow {
   cover_kind: string | null;
 }
 
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 
 /** Runs before anything reads the database (SQLiteProvider onInit): makes it, or brings an older one up to date. */
 export async function migrate(db: SQLiteDatabase): Promise<void> {
@@ -136,6 +136,29 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 `);
     version = 2;
+  }
+  if (version === 2) {
+    // Playlists: each YouTube search the app has made (so a song is only searched for once: searches use up
+    // Google's daily allowance), and the playlists you've made, with how far each got.
+    await db.execAsync(`
+CREATE TABLE IF NOT EXISTS youtube_matches (
+  song TEXT PRIMARY KEY NOT NULL,
+  verdict TEXT NOT NULL,
+  candidates TEXT NOT NULL DEFAULT '[]',
+  at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS playlists (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  service TEXT NOT NULL,
+  name TEXT NOT NULL,
+  remote_id TEXT NOT NULL DEFAULT '',
+  privacy TEXT NOT NULL DEFAULT 'private',
+  songs TEXT NOT NULL DEFAULT '[]',
+  created TEXT NOT NULL,
+  updated TEXT NOT NULL
+);
+`);
+    version = 3;
   }
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
@@ -474,3 +497,163 @@ export async function listDiscogsRows(db: SQLiteDatabase): Promise<Omit<DiscogsR
     notes: row.notes,
   }));
 }
+
+/** The tracklist kept for each of these items (fetched with their artwork), by item key. */
+export async function getTracklists(db: SQLiteDatabase, keys: string[]): Promise<Map<string, Track[]>> {
+  const found = new Map<string, Track[]>();
+  // In batches: SQLite takes only so many ? at once.
+  for (let start = 0; start < keys.length; start += 500) {
+    const batch = keys.slice(start, start + 500);
+    const rows = await db.getAllAsync<{ item_key: string; tracklist: string }>(
+      `SELECT item_key, tracklist FROM lookups WHERE item_key IN (${batch.map(() => '?').join(', ')})`,
+      ...batch
+    );
+    for (const row of rows) {
+      try {
+        const tracks = row.tracklist ? (JSON.parse(row.tracklist) as Track[]) : [];
+        if (tracks.length > 0) {
+          found.set(row.item_key, tracks);
+        }
+      } catch {
+        // A damaged tracklist: as if there were none.
+      }
+    }
+  }
+  return found;
+}
+
+/** Items by key, in the order asked for (ones no longer here are left out). */
+export async function getItems(db: SQLiteDatabase, keys: string[]): Promise<Item[]> {
+  const found = new Map<string, Item>();
+  for (let start = 0; start < keys.length; start += 500) {
+    const batch = keys.slice(start, start + 500);
+    const rows = await db.getAllAsync<ItemRow>(`SELECT ${WITH_COVER} FROM items WHERE key IN (${batch.map(() => '?').join(', ')})`, ...batch);
+    for (const row of rows) {
+      found.set(row.key, toItem(row));
+    }
+  }
+  return keys.map((key) => found.get(key)).filter((item): item is Item => Boolean(item));
+}
+
+// Playlists -----------------------------------------------------------------------------------------------------
+
+/** A search the app has made on YouTube, kept so it's never made twice. */
+export interface SavedMatch {
+  verdict: 'found' | 'check' | 'not-there';
+  candidates: { videoId: string; title: string; channel: string }[];
+}
+
+export async function getSavedMatch(db: SQLiteDatabase, songKey: string): Promise<SavedMatch | null> {
+  const row = await db.getFirstAsync<{ verdict: string; candidates: string }>('SELECT verdict, candidates FROM youtube_matches WHERE song = ?', songKey);
+  if (!row) {
+    return null;
+  }
+  try {
+    return { verdict: row.verdict as SavedMatch['verdict'], candidates: JSON.parse(row.candidates) as SavedMatch['candidates'] };
+  } catch {
+    return null;
+  }
+}
+
+export async function saveMatch(db: SQLiteDatabase, songKey: string, match: SavedMatch): Promise<void> {
+  await db.runAsync(
+    'INSERT INTO youtube_matches (song, verdict, candidates, at) VALUES (?, ?, ?, ?) ON CONFLICT (song) DO UPDATE SET verdict = excluded.verdict, candidates = excluded.candidates, at = excluded.at',
+    songKey,
+    match.verdict,
+    JSON.stringify(match.candidates),
+    new Date().toISOString()
+  );
+}
+
+/** One song in a saved playlist: what it is, the video chosen for it, and whether it's on the playlist yet. */
+export interface PlaylistSong {
+  id: string;
+  itemKey: string;
+  artist: string;
+  title: string;
+  wholeRecord: boolean;
+  videoId: string;
+  videoTitle: string;
+  added: boolean;
+}
+
+export interface SavedPlaylist {
+  id: number;
+  service: 'youtube';
+  name: string;
+  /** The service's id for it; '' until it's been made there. */
+  remoteId: string;
+  privacy: 'private' | 'unlisted';
+  songs: PlaylistSong[];
+  created: string;
+  updated: string;
+}
+
+interface PlaylistRow {
+  id: number;
+  service: string;
+  name: string;
+  remote_id: string;
+  privacy: string;
+  songs: string;
+  created: string;
+  updated: string;
+}
+
+function toPlaylist(row: PlaylistRow): SavedPlaylist {
+  let songs: PlaylistSong[] = [];
+  try {
+    songs = JSON.parse(row.songs) as PlaylistSong[];
+  } catch {
+    // A damaged list: shown empty rather than not at all.
+  }
+  return {
+    id: row.id,
+    service: 'youtube',
+    name: row.name,
+    remoteId: row.remote_id,
+    privacy: row.privacy === 'unlisted' ? 'unlisted' : 'private',
+    songs,
+    created: row.created,
+    updated: row.updated,
+  };
+}
+
+export async function listPlaylists(db: SQLiteDatabase): Promise<SavedPlaylist[]> {
+  const rows = await db.getAllAsync<PlaylistRow>('SELECT * FROM playlists ORDER BY updated DESC');
+  return rows.map(toPlaylist);
+}
+
+export async function getPlaylist(db: SQLiteDatabase, id: number): Promise<SavedPlaylist | null> {
+  const row = await db.getFirstAsync<PlaylistRow>('SELECT * FROM playlists WHERE id = ?', id);
+  return row ? toPlaylist(row) : null;
+}
+
+/** A new playlist (not on the service yet): its id here. */
+export async function addPlaylist(db: SQLiteDatabase, playlist: Pick<SavedPlaylist, 'name' | 'privacy' | 'songs'>): Promise<number> {
+  const now = new Date().toISOString();
+  const result = await db.runAsync(
+    "INSERT INTO playlists (service, name, privacy, songs, created, updated) VALUES ('youtube', ?, ?, ?, ?, ?)",
+    playlist.name,
+    playlist.privacy,
+    JSON.stringify(playlist.songs),
+    now,
+    now
+  );
+  return result.lastInsertRowId;
+}
+
+export async function updatePlaylist(db: SQLiteDatabase, id: number, change: { remoteId?: string; songs?: PlaylistSong[] }): Promise<void> {
+  const current = await getPlaylist(db, id);
+  if (!current) {
+    return;
+  }
+  await db.runAsync(
+    'UPDATE playlists SET remote_id = ?, songs = ?, updated = ? WHERE id = ?',
+    change.remoteId ?? current.remoteId,
+    JSON.stringify(change.songs ?? current.songs),
+    new Date().toISOString(),
+    id
+  );
+}
+
