@@ -1,6 +1,6 @@
-# BlackCatBone Pocket: where things stand, 18 Oct 2026
+# BlackCatBone Pocket: where things stand, 21 Oct 2026
 
-**Start here.** This is the phone app's handover. It's a project of its own, separate from the BlackCatBone game (which lives in `Claude Ideas\Cozy Music Shop\FlipSide`; don't change the game from here). See also `README.md` (what it does, how to run it) and `POCKET-DESIGN.md` (the full design and its phases). Inside `app\`, read `AGENTS.md` before touching any Expo API.
+**Start here.** This is the phone app's handover, for Claude on the user's PC or in a cloud session from their phone. It's a project of its own, separate from the BlackCatBone game; don't change the game from here. `CLAUDE.md` says how to get changes onto the phone (over-the-air updates, or a new build). See also `README.md` (what it does, how to run it) and `POCKET-DESIGN.md` (the full design and its phases). Inside `app\`, read `AGENTS.md` before touching any Expo API.
 
 ## In short
 BlackCatBone Pocket is a phone app (iPhone and Android) for viewing your music collection.
@@ -11,15 +11,17 @@ BlackCatBone Pocket is a phone app (iPhone and Android) for viewing your music c
   - Saves the collection as a Discogs-style CSV.
 - Coming later: mixtapes, barcode/ID-tag scanning, streaming playlists, a player.
 - It is **not** the game: no shop, no 3D. That was the user's choice.
-- **It runs on the user's Android phone** in Expo Go 58, from a dev server on the PC.
+- **It's installed on the user's Android phone** as a real app: EAS preview build 0.1.0 (finished 21 Oct), which takes over-the-air updates on the **preview** channel. No PC or Expo Go is needed to run it.
+- **The code is on GitHub** (private): rebaggaley-ui/blackcatbone-pocket, so Claude Code cloud sessions can work on it from the phone. The Expo project is @rebaggaley/blackcatbone-pocket.
 
-## Where it's up to (18 Oct)
-- The user has **saved their Discogs token** in the app (Settings).
+## Where it's up to (21 Oct)
+- The user is installing build 0.1.0 from its page on expo.dev (expo.dev/accounts/rebaggaley/projects/blackcatbone-pocket/builds/704b94d6-5a8e-4681-a9ee-a639d4b7fcf9). It's a new install, so it starts empty: they paste their Discogs token again in Settings.
+- For cloud sessions, the user is setting up the GitHub connection to the repository, and an Expo access token as `EXPO_TOKEN` in the cloud environment.
 - **Next for the user:** Settings > *Bring in from Discogs* (about half a minute for 1,212 records). Then switch on *Discogs photos of your releases* (and stand-ins if wanted); the whole collection takes about 22 minutes with the token, while the app's open.
 - Not yet tried on the phone: a full artwork run, the camera and photo picker, saving a CSV through the share sheet, and the CSV import on the phone.
 
 ## What needs doing next
-1. **Help the user finish the first run on the phone** (bring the collection in, then artwork). Fix whatever shows up. The dev server's output, in the terminal running `npm start`, shows the phone's errors.
+1. **Help the user finish the first run on the phone** (bring the collection in, then artwork). Fix whatever shows up, and send fixes as an over-the-air update (see `CLAUDE.md`). There's no dev server now, so ask the user what they see.
 2. **Make "Save as a CSV" write formats exactly as Discogs' export does.** Found by the game's Discogs import work on 18 Oct: `formatText` in `src\lib\discogsCollection.ts` differs from the export for 693 of the 1,212 records. Kinds and filters are unaffected; the CSV Pocket saves for the game is. The export's rules (the game's `ExportFormat` matches all 1,212 records):
    - sizes come first;
    - "LP" is dropped when there's a size;
@@ -36,7 +38,6 @@ BlackCatBone Pocket is a phone app (iPhone and Android) for viewing your music c
 7. **The player** (design section 6): music files on the phone first.
 8. **Later:**
    - "Sign in with Discogs": register the app with Discogs for OAuth, so others don't paste a token.
-   - A standalone `.apk` through EAS: needs a free Expo account the user signs in to themselves.
    - Phase 2 export to the game.
 
 ## How it's built
@@ -58,10 +59,10 @@ BlackCatBone Pocket is a phone app (iPhone and Android) for viewing your music c
   - `npx expo export --platform android --platform ios` (both phone bundles).
   - `npm test` uses the real export in `test-data\` (outside `app\`, so never in git).
 - **Running it:**
-  - `npm start` in `app\`. The phone scans the QR code in Expo Go 58 on the same Wi-Fi.
-  - The user's Play Store Expo Go was too old, so Expo Go 58.0.4 is installed from github.com/expo/expo-go-releases.
+  - **On the phone:** the installed preview build. Changes reach it as EAS updates; native changes need a new build after raising `version` (see `CLAUDE.md`). Build settings are in `app/eas.json`, and `runtimeVersion` follows the app version.
+  - **On the PC, for quick tries:** `npm start` in `app\` with Expo Go 58 (installed from github.com/expo/expo-go-releases; the Play Store's was too old).
   - Web preview: `npm run web`, or `.claude\launch.json` "pocket-web". It can bring the collection in by username, but can't pick files or keep a token.
-- `app\` has its own git repo, made by create-expo-app. Nothing has been committed: ask the user before committing.
+- **Git:** one repository for the whole project, pushed to GitHub `main`; the root `.gitignore` leaves out `test-data/`. Git on the PC signs in through Git Credential Manager. The empty repository create-expo-app made is archived at `F:\Builds\Archive\pocket-app-git-empty-20261018`.
 
 ## Things learnt
 - Discogs' mobile site can't export a CSV, and the Discogs app can't make tokens. The token comes from the website's Settings > Developers > *Generate new token*; the "API applications" form isn't needed.

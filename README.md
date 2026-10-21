@@ -16,7 +16,12 @@ Your record collection on your phone (iPhone and Android). A project of its own,
 
 Not yet: barcode and ID-tag scanning, items not on Discogs, mixtapes, playlists, the player (see the phases in the design).
 
-## Try it on your phone with Expo Go
+## Install it on your phone (Android)
+The app is built in Expo's cloud (EAS) as an installable `.apk`. Open the latest build's page on expo.dev (project @rebaggaley/blackcatbone-pocket > Builds) on the phone, tap **Install**, and allow "install unknown apps" for your browser if Android asks. After that the app updates itself: new versions of its code arrive over the air when you open it (a restart or two). Only changes to its native parts need a new build, which you install the same way.
+
+The code is on GitHub (rebaggaley-ui/blackcatbone-pocket, private), so Claude Code can work on it in the cloud, from your phone; `CLAUDE.md` tells it how to send updates.
+
+## Try it on your phone with Expo Go (from the PC)
 1. On your phone, install **Expo Go** from the App Store or Google Play.
 2. On the PC, in `BlackCatBone Pocket\app`:
    ```bash
