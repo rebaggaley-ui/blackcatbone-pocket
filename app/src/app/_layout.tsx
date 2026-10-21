@@ -23,6 +23,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ title: 'Your collection' }} />
         <Stack.Screen name="record/[key]" options={{ title: '' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="playlist" options={{ title: 'YouTube playlist' }} />
       </Stack>
     </SQLiteProvider>
   );

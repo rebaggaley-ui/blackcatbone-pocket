@@ -187,6 +187,7 @@ export default function Record() {
         <Action label="Take a photo" onPress={() => addPhoto('camera')} disabled={Boolean(busy)} primary />
         <Action label="Choose photos" onPress={() => addPhoto('library')} disabled={Boolean(busy)} />
         {!images.some((image) => image.kind !== 'your-photo') ? <Action label="Find artwork now" onPress={findArtwork} disabled={Boolean(busy)} /> : null}
+        <Action label="YouTube playlist" onPress={() => router.push({ pathname: '/playlist', params: { keys: item.key } })} disabled={Boolean(busy)} />
       </View>
       {busy ? <Text style={styles.faded}>{busy}</Text> : null}
 

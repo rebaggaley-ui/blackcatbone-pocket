@@ -14,7 +14,9 @@ Your record collection on your phone (iPhone and Android). A project of its own,
   - Your **Discogs token** is kept in the phone's secure storage: paste it in Settings, or *Import from a file* (a text file with the token in it). *Check* happens as you save it.
 - Records with no picture yet are **plain sleeves** (a colour of their own, with artist and title), so they're never mistaken for the real picture.
 
-Not yet: barcode and ID-tag scanning, items not on Discogs, mixtapes, playlists, the player (see the phases in the design).
+- **YouTube playlists** (*Playlist* on the collection screen, *YouTube playlist* on a record's page, or Settings): tick records (search, or *Tick all shown*), choose A sides or both sides for singles, and the app finds each song on YouTube. Every match is shown before anything's made, marked *Found*, *Check* (a near miss: you choose, from the other results if you like) or *Not there*. Then *Make the playlist* makes it in your YouTube account, private or for anyone with the link, with *Open in YouTube* and *Share the link*. Albums give every track once their tracklist has come with the Discogs artwork; without one, the album's looked for whole. Google allows about 66 new songs a day; songs found once are remembered, and a playlist that runs out carries on the next day. *Share as a list* sends the songs as text, for any other service. **It needs a one-off setup on Google's website and the app's own build (not Expo Go): see [YOUTUBE-SETUP.md](YOUTUBE-SETUP.md).**
+
+Not yet: barcode and ID-tag scanning, items not on Discogs, mixtapes, Spotify playlists and playlist files, the player (see the phases in the design).
 
 ## Install it on your phone (Android)
 The app is built in Expo's cloud (EAS) as an installable `.apk`. Open the latest build's page on expo.dev (project @rebaggaley/blackcatbone-pocket > Builds) on the phone, tap **Install**, and allow "install unknown apps" for your browser if Android asks. After that the app updates itself: new versions of its code arrive over the air when you open it (a restart or two). Only changes to its native parts need a new build, which you install the same way.
@@ -51,4 +53,4 @@ npm run typecheck
 npm run lint
 npm test
 ```
-`npm test` checks the CSV reader and writer (including against a real export when there's a CSV in `test-data\`, next to `app\`; it's kept out of the app's git), the Discogs collection mapping and the artwork parsers. `npm run web` previews it in a browser on the PC: bringing the collection in from Discogs works there (by username); picking a file and keeping a token need a phone.
+`npm test` checks the CSV reader and writer (including against a real export when there's a CSV in `test-data\`, next to `app\`; it's kept out of the app's git), the Discogs collection mapping, the artwork parsers, and the YouTube matching and API calls (against a stand-in for YouTube). `npm run web` previews it in a browser on the PC: bringing the collection in from Discogs works there (by username); picking a file and keeping a token need a phone.

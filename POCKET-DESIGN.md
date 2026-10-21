@@ -111,7 +111,7 @@ A song is never quietly swapped for a different version.
 | Service | How | Limits |
 |---|---|---|
 | **Spotify** | Sign in to your Spotify account in the app (Spotify's own sign-in page); the playlist is made in your account. | Since 2025 Spotify only allows an app outside its approved list for a few named users, which is fine for you and a few friends. Releasing it to everyone would need Spotify's approval, which is hard for a small app. |
-| **YouTube / YouTube Music** | Sign in to your Google account; the playlist is made in your YouTube account (and shows in YouTube Music). | Google's daily allowance for an app runs out fast: each song search costs twice as much as adding a song, so roughly **100 songs a day** when they have to be searched for. Bigger playlists carry on the next day, or you can raise the allowance with Google. |
+| **YouTube / YouTube Music** | Sign in to your Google account; the playlist is made in your YouTube account (and shows in YouTube Music). | Google's daily allowance for an app runs out fast: each song search costs twice as much as adding a song, so roughly **66 songs a day** when they have to be searched for (100 units a search plus 50 to add, of 10,000 a day; a song found once is remembered). Bigger playlists carry on the next day, or you can raise the allowance with Google. |
 | **Apple Music** | Through Apple's MusicKit. | Needs the Apple developer account (see 7). Later. |
 | **Any other service** (Tidal, Deezer, Amazon Music...) | **Export a playlist file** (CSV with artist, title and album, or M3U) that the common playlist-transfer services import into almost any app. | No sign-in needed in this app. |
 

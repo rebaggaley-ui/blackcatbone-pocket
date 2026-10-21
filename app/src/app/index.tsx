@@ -105,6 +105,11 @@ export default function Collection() {
                 <Text style={styles.headerButton}>{busy ? 'Working...' : 'Update'}</Text>
               </Pressable>
             ) : null}
+            {total > 0 ? (
+              <Pressable onPress={() => router.push('/playlist')} hitSlop={12}>
+                <Text style={styles.headerButton}>Playlist</Text>
+              </Pressable>
+            ) : null}
             <Pressable onPress={() => router.push('/settings')} hitSlop={12}>
               <Text style={styles.headerButton}>Settings</Text>
             </Pressable>
