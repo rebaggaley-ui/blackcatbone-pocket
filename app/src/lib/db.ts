@@ -643,13 +643,14 @@ export async function addPlaylist(db: SQLiteDatabase, playlist: Pick<SavedPlayli
   return result.lastInsertRowId;
 }
 
-export async function updatePlaylist(db: SQLiteDatabase, id: number, change: { remoteId?: string; songs?: PlaylistSong[] }): Promise<void> {
+export async function updatePlaylist(db: SQLiteDatabase, id: number, change: { name?: string; remoteId?: string; songs?: PlaylistSong[] }): Promise<void> {
   const current = await getPlaylist(db, id);
   if (!current) {
     return;
   }
   await db.runAsync(
-    'UPDATE playlists SET remote_id = ?, songs = ?, updated = ? WHERE id = ?',
+    'UPDATE playlists SET name = ?, remote_id = ?, songs = ?, updated = ? WHERE id = ?',
+    change.name ?? current.name,
     change.remoteId ?? current.remoteId,
     JSON.stringify(change.songs ?? current.songs),
     new Date().toISOString(),

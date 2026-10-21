@@ -8,6 +8,7 @@ import {
   judge,
   pickMatch,
   quotaDay,
+  renamePlaylist,
   searchQuery,
   searchVideos,
   songKey,
@@ -134,4 +135,12 @@ test("YouTube's refusals: out of allowance, signed out", async () => {
   ]);
   await assert.rejects(searchVideos('tok', 'x'), (error: unknown) => error instanceof YouTubeError && error.outOfQuota && !error.signInNeeded);
   await assert.rejects(addToPlaylist('tok', 'p', 'v'), (error: unknown) => error instanceof YouTubeError && error.signInNeeded);
+});
+
+test('renaming a playlist sends its name and description again', async () => {
+  const asked = fakeFetch([{ status: 200, json: { id: 'PL123' } }]);
+  await renamePlaylist('tok', 'PL123', { name: 'Northern Soul', description: 'From my records' });
+  assert.equal(asked[0].method, 'PUT');
+  assert.match(asked[0].url, /playlists\?part=snippet$/);
+  assert.deepEqual(asked[0].body, { id: 'PL123', snippet: { title: 'Northern Soul', description: 'From my records' } });
 });

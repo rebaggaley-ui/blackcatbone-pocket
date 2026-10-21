@@ -315,6 +315,14 @@ export async function createPlaylist(token: string, playlist: { name: string; de
   return json.id;
 }
 
+/** A new name for a playlist (costs 50 units). YouTube replaces the whole description too, so it's sent again. */
+export async function renamePlaylist(token: string, playlistId: string, playlist: { name: string; description: string }): Promise<void> {
+  await call(token, 'playlists?part=snippet', {
+    method: 'PUT',
+    body: { id: playlistId, snippet: { title: playlist.name.slice(0, 150), description: playlist.description.slice(0, 5000) } },
+  });
+}
+
 /** One video on the end of a playlist (costs 50 units). */
 export async function addToPlaylist(token: string, playlistId: string, videoId: string): Promise<void> {
   await call(token, 'playlistItems?part=snippet', {

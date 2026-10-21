@@ -14,6 +14,7 @@ import {
   findOnYouTube,
   makeYouTubePlaylist,
   rememberChoice,
+  renameYouTubePlaylist,
   unitsLeftToday,
   type FoundSong,
   type MakeResult,
@@ -46,6 +47,8 @@ export default function Playlist() {
   const [waiting, setWaiting] = useState(0);
   const [made, setMade] = useState<MakeResult | null>(null);
   const [revision, setRevision] = useState(0);
+  /** The saved playlist being renamed, and its new name so far. */
+  const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null);
   const account = useRef<GoogleAccount | null>(null);
   const stopRequested = useRef(false);
   const problem = useMemo(() => googleSignInProblem(), []);
@@ -180,6 +183,23 @@ export default function Playlist() {
     },
     [db, signIn]
   );
+
+  const saveName = useCallback(async () => {
+    if (!renaming) {
+      return;
+    }
+    try {
+      if (!(await signIn())) {
+        return;
+      }
+      await renameYouTubePlaylist(db, account.current as GoogleAccount, renaming.id, renaming.name);
+      setRenaming(null);
+    } catch (error) {
+      tell('Couldn’t rename it', error instanceof Error ? error.message : String(error));
+    } finally {
+      setRevision((n) => n + 1);
+    }
+  }, [db, renaming, signIn]);
 
   const startAgain = useCallback(() => {
     setStage('pick');
@@ -332,10 +352,27 @@ export default function Playlist() {
                 <Text style={styles.cardTitle}>Your playlists</Text>
                 {saved.map((playlist) => {
                   const added = playlist.songs.filter((song) => song.added).length;
+                  if (renaming?.id === playlist.id) {
+                    return (
+                      <View key={playlist.id} style={styles.saved}>
+                        <TextInput
+                          style={[styles.input, styles.flex]}
+                          value={renaming.name}
+                          onChangeText={(name) => setRenaming({ id: playlist.id, name })}
+                          onSubmitEditing={saveName}
+                          autoFocus
+                          selectTextOnFocus
+                        />
+                        <Button label="Save" onPress={saveName} primary disabled={!renaming.name.trim()} />
+                        <Button label="Cancel" onPress={() => setRenaming(null)} />
+                      </View>
+                    );
+                  }
                   return (
                     <View key={playlist.id} style={styles.saved}>
                       <Text style={[styles.value, styles.flex]} numberOfLines={1}>{`${playlist.name} (${added} of ${playlist.songs.length})`}</Text>
                       {playlist.remoteId ? <Button label="Open" onPress={() => Linking.openURL(playlistUrl(playlist.remoteId))} /> : null}
+                      <Button label="Rename" onPress={() => setRenaming({ id: playlist.id, name: playlist.name })} disabled={Boolean(problem)} />
                       {added < playlist.songs.length ? <Button label="Carry on" onPress={() => carryOn(playlist)} disabled={Boolean(problem)} /> : null}
                     </View>
                   );

@@ -55,7 +55,7 @@ BlackCatBone Pocket is a phone app (iPhone and Android) for viewing your music c
   - `images.ts` (picture files), `photos.ts` (camera and library), `artwork.ts` (parsers), `collectionSources.ts` (bring in, save CSV), `useCollectionActions.ts`.
 - The **token** is in expo-secure-store; it's never in the database. Online lookups are off until switched on.
 - **Checks** (run them before calling anything done):
-  - `npm run typecheck`, `npm run lint`, `npm test` (31 tests).
+  - `npm run typecheck`, `npm run lint`, `npm test` (32 tests).
   - `npx expo export --platform android --platform ios` (both phone bundles).
   - `npm test` uses the real export in `test-data\` (outside `app\`, so never in git).
 - **Running it:**

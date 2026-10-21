@@ -17,6 +17,7 @@ import {
   createPlaylist,
   DAILY_UNITS,
   pickMatch,
+  renamePlaylist,
   quotaDay,
   searchQuery,
   searchVideos,
@@ -33,6 +34,8 @@ import {
  */
 
 const SETTING_QUOTA = 'youtube.quota';
+
+const DESCRIPTION = 'Made from my record collection with BlackCatBone Pocket.';
 
 /** Units used today (as the app counts them: Google's own count is in its console). */
 export async function unitsUsedToday(db: SQLiteDatabase): Promise<number> {
@@ -191,7 +194,7 @@ export async function carryOnPlaylist(db: SQLiteDatabase, account: GoogleAccount
     let remoteId = playlist.remoteId;
     if (!remoteId) {
       remoteId = await withAccount(account, (token) =>
-        createPlaylist(token, { name: playlist.name, description: 'Made from my record collection with BlackCatBone Pocket.', privacy: playlist.privacy })
+        createPlaylist(token, { name: playlist.name, description: DESCRIPTION, privacy: playlist.privacy })
       );
       await spendUnits(db, COST.insert);
       await updatePlaylist(db, id, { remoteId });
@@ -215,4 +218,25 @@ export async function carryOnPlaylist(db: SQLiteDatabase, account: GoogleAccount
     throw error;
   }
   return result();
+}
+
+/** A new name for a saved playlist, here and on YouTube (if it's been made there yet). */
+export async function renameYouTubePlaylist(db: SQLiteDatabase, account: GoogleAccount, id: number, name: string): Promise<void> {
+  const playlist = await getPlaylist(db, id);
+  const clean = name.trim();
+  if (!playlist || !clean || clean === playlist.name) {
+    return;
+  }
+  if (playlist.remoteId) {
+    try {
+      await withAccount(account, (token) => renamePlaylist(token, playlist.remoteId, { name: clean, description: DESCRIPTION }));
+    } catch (error) {
+      if (error instanceof YouTubeError && error.outOfQuota) {
+        await allowanceGone(db);
+      }
+      throw error;
+    }
+    await spendUnits(db, COST.insert);
+  }
+  await updatePlaylist(db, id, { name: clean });
 }
